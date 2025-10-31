@@ -1,0 +1,64 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime files
+pids/*.pid
+*.pid.lock
+*.seed
+
+# Optional npm cache
+.npm
+
+# Build output
+dist/
+build/
+out/
+tmp/
+temp/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Test output
+jest/cache/
+*.lcov
+
+# Environment variables
+.env
+.env.*.local
+.env.local
+.env.test
+.env.production
+
+# TypeScript
+*.tsbuildinfo
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Misc
+.eslintcache
+.npmrc
+.pnp.*
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
