@@ -23,7 +23,7 @@ const uri =
 const DB_NAME = 'country_state_database_for_scrap';
 const BATCH_ID = 8; // Batch group identifier
 const BATCH_SIZE = 20000; // Total records per batch
-const SCRAP_BATCH_SIZE = 15; // Parallel scraping per group
+const SCRAP_BATCH_SIZE = 4; // Parallel scraping per group
 
 let connection;
 let ScrapUrlModel;
