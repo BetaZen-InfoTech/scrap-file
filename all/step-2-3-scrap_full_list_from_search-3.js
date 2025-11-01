@@ -286,6 +286,24 @@ async function batchGeocode ( BATCH_ID )
                             );
                         }
 
+                        // Entry, which url not find
+                        try
+                        {
+                            await ScrapUrlModel.insertMany( urlDocs, { ordered: false } );
+                            console.log( `🟢 [Batch ${ BATCH_ID }] Inserted ${ urlDocs.length } URLs` );
+                        } catch ( err )
+                        {
+                            if ( err.writeErrors )
+                            {
+                                const dupCount = err.writeErrors.filter( ( e ) => e.code === 11000 ).length;
+                                console.log( `⚠️ [Batch ${ BATCH_ID }] ${ dupCount } duplicate URLs skipped` );
+                                totalScraped -= dupCount;
+                            } else
+                            {
+                                console.error( `❌ [Batch ${ BATCH_ID }] Insert error:`, err.message );
+                            }
+                        }
+
                         await IndianModel.updateOne(
                             { _id: id },
                             { $inc: { scrapTotal: totalScraped } }

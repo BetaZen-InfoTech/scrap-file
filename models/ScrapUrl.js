@@ -56,5 +56,11 @@ const ScrapUrlSchema = new mongoose.Schema(
 ScrapUrlSchema.index( { stateId: 1 } );
 ScrapUrlSchema.index( { categoryId: 1 } );
 ScrapUrlSchema.index( { scrapParentId: 1 } );
+ScrapUrlSchema.index( { State: 1 } );
+ScrapUrlSchema.index( { District: 1 } );
+ScrapUrlSchema.index( { Pincode: 1 } );
+ScrapUrlSchema.index( { CategoryName: 1 } );
+ScrapUrlSchema.index( { CategoryType: 1 } );
+ScrapUrlSchema.index( { category: 1 } );
 
 module.exports = mongoose.model( 'ScrapUrl', ScrapUrlSchema );
