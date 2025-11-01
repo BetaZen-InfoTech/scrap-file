@@ -375,8 +375,8 @@ async function safeRun ()
 {
 
     let attempt = 1;
-    const startBatch = ( BATCH_ID - 1 ) * 3 + 1;
-    const endBatch = ( BATCH_ID - 1 ) * 3 + 3;
+    const startBatch = ( BATCH_ID - 1 ) * 4 + 1;
+    const endBatch = ( BATCH_ID - 1 ) * 4 + 4;
 
     browser = await chromium.launch( { headless: true } );
 
