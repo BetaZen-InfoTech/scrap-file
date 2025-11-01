@@ -11,7 +11,7 @@
 const mongoose = require( "mongoose" );
 const { chromium } = require( "playwright" );
 const cliProgress = require( "cli-progress" );
-const ScrapUrl = require( "./models/ScrapUrl" );
+const ScrapUrl = require( "../models/ScrapUrl" );
 
 // ------------------ CONFIG ------------------
 const MONGO_URI =
