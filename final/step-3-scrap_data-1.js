@@ -19,7 +19,7 @@ const MONGO_URI =
 
 const DB_NAME = "country_state_database_for_scrap";
 const BATCH_ID = 1;
-const BATCH_SIZE = 150;
+const BATCH_SIZE = 15000;
 
 const SCRAP_BATCH_SIZE = 15; // number of URLs to scrape in parallel
 const MAX_LIMIT = 200; // number of documents to load at once

@@ -18,8 +18,8 @@ const MONGO_URI =
     "mongodb://dbRootUser:kgutfvTD568757GFDFHchtdYRFHf6778675CHFdcyfhCXyrfhcJcfrYXS5t75r4gJFhtcfFHdYRYIFTU45364367GJUYfJft379kgBigFdRswAawTSEey53egfytdYTFytSDtrXfDtrzAetSDKGBlG75762497@mongodb.betazeninfotech.com:27017/country_state_database_for_scrap?authSource=country_state_database_for_scrap";
 
 const DB_NAME = "country_state_database_for_scrap";
-const BATCH_ID = 1;
-const BATCH_SIZE = 150;
+const BATCH_ID = 2;
+const BATCH_SIZE = 15000;
 
 const SCRAP_BATCH_SIZE = 15; // number of URLs to scrape in parallel
 const MAX_LIMIT = 200; // number of documents to load at once

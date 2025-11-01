@@ -189,7 +189,7 @@ async function safeRun ()
             await Promise.all( Array.from( { length: batchCount }, ( _, i ) => batchGeocode( i + 1 ) ) );
 
             console.log( '✅ All batches completed successfully.' );
-            break;
+            // break;       // Exit loop if successful
         } catch ( err )
         {
             console.error( `🔥 Crash detected (Attempt #${ attempt }):`, err.message );
