@@ -8,11 +8,14 @@
  * ✅ Auto-restarts if crash occurs
  * ✅ All batches run in parallel
  * ✅ Enhanced with robust try/catch and structured logging
+ * ✅ Now includes CPU usage monitoring and throttling
  */
 
 const mongoose = require( 'mongoose' );
 const { chromium } = require( 'playwright' );
 const cliProgress = require( 'cli-progress' );
+const pidusage = require( 'pidusage' );
+const os = require( 'os' );
 const ScrapUrl = require( '../models/ScrapUrl' );
 const IndianStateCategoryScrap = require( '../models/indian_state_category_scrap' );
 
@@ -23,11 +26,31 @@ const uri =
 const DB_NAME = 'country_state_database_for_scrap';
 const BATCH_ID = 4; // Batch group identifier
 const BATCH_SIZE = 20000; // Total records per batch
-const SCRAP_BATCH_SIZE = 4; // Parallel scraping per group
+const SCRAP_BATCH_SIZE = 3; // Parallel scraping per group
 
 let connection;
 let ScrapUrlModel;
 let IndianModel;
+let browser;
+
+
+// ------------------ CPU MONITOR ------------------
+async function checkCPUUsage ( maxCPU = 85 )
+{
+    try
+    {
+        const stats = await pidusage( process.pid );
+        const cpu = stats.cpu;
+        if ( cpu > maxCPU )
+        {
+            console.log( `⚠️  High CPU usage detected: ${ cpu.toFixed( 1 ) }%. Pausing 30s to cool down...` );
+            await new Promise( res => setTimeout( res, 30000 ) ); // pause 30 seconds
+        }
+    } catch ( err )
+    {
+        console.log( "⚠️ CPU check failed:", err.message );
+    }
+}
 
 // ------------------ PROCESS INDIVIDUAL PLACE ------------------
 async function processBatch ( doc, context, idx )
@@ -43,7 +66,6 @@ async function processBatch ( doc, context, idx )
 
         doc.updatedAt = new Date();
 
-        // --------------- Extract fields ---------------
         try
         {
             const el = await page.$( 'h1.DUwDvf' );
@@ -130,7 +152,6 @@ async function processBatch ( doc, context, idx )
             doc.price_per_person = el ? ( await el.textContent() ).trim() : null;
         } catch { }
 
-        // --- Validation ---
         if ( !doc.name_en )
         {
             console.log( '⚠️ [processBatch] Place name not found, possible page load issue.' );
@@ -141,7 +162,6 @@ async function processBatch ( doc, context, idx )
             console.log( `✅ [processBatch] Scraped successfully: ${ doc.name_en }` );
         }
 
-        // --- Insert scraped record ---
         try
         {
             const result = await ScrapUrlModel.insertOne( doc );
@@ -222,7 +242,9 @@ async function batchGeocode ( BATCH_ID )
                 console.log( `\n🗺️ [${ BATCH_ID }:${ i + 1 }/${ docs.length }] ${ searchString } (${ id })` );
                 console.time( `⏱️ Batch ${ BATCH_ID } Record ${ i + 1 }` );
 
-                const browser = await chromium.launch( { headless: true } );
+                // 🧠 Check CPU before launching browser
+                await checkCPUUsage();
+
                 const context = await browser.newContext();
 
                 try
@@ -253,7 +275,7 @@ async function batchGeocode ( BATCH_ID )
                         ( links ) => [ ...new Set( links.map( ( link ) => link.href.trim() ) ) ]
                     );
 
-                    const totalScraped = urls.length;
+                    let totalScraped = urls.length;
                     console.log( `✅ [Batch ${ BATCH_ID }] Found ${ totalScraped } URLs` );
 
                     if ( totalScraped > 0 )
@@ -277,16 +299,15 @@ async function batchGeocode ( BATCH_ID )
                             status: 'waiting',
                         } ) );
 
-                        // Process place URLs in small parallel groups
                         for ( let j = 0; j < urlDocs.length; j += SCRAP_BATCH_SIZE )
                         {
+                            await checkCPUUsage(); // 🧠 check before each small batch
                             const batchDocs = urlDocs.slice( j, j + SCRAP_BATCH_SIZE );
                             await Promise.all(
                                 batchDocs.map( ( d, idx ) => processBatch( d, context, j + idx ) )
                             );
                         }
 
-                        // Entry, which url not find
                         try
                         {
                             await ScrapUrlModel.insertMany( urlDocs, { ordered: false } );
@@ -329,7 +350,7 @@ async function batchGeocode ( BATCH_ID )
                     );
                 } finally
                 {
-                    await browser.close();
+                    await context.close();
                     console.timeEnd( `⏱️ Batch ${ BATCH_ID } Record ${ i + 1 }` );
                 }
             } catch ( loopErr )
@@ -352,9 +373,12 @@ async function batchGeocode ( BATCH_ID )
 // ------------------ AUTO-RESTART WRAPPER ------------------
 async function safeRun ()
 {
+
     let attempt = 1;
-    const startBatch = ( BATCH_ID - 1 ) * 4 + 1;
-    const endBatch = ( BATCH_ID - 1 ) * 4 + 4;
+    const startBatch = ( BATCH_ID - 1 ) * 3 + 1;
+    const endBatch = ( BATCH_ID - 1 ) * 3 + 3;
+
+    browser = await chromium.launch( { headless: true } );
 
     try
     {
@@ -395,6 +419,23 @@ async function safeRun ()
         console.error( `❌ [safeRun] Mongo connection error: ${ connErr.message }` );
     }
 }
+
+// ------------------ BACKGROUND CPU WATCHER ------------------
+setInterval( async () =>
+{
+    try
+    {
+        const stats = await pidusage( process.pid );
+        if ( stats.cpu > 90 )
+        {
+            console.log( `🚨 Sustained CPU load (${ stats.cpu.toFixed( 1 ) }%). Restarting process...` );
+            process.exit( 1 ); // PM2 or wrapper restarts scraper
+        }
+    } catch ( err )
+    {
+        console.log( "⚠️ Background CPU monitor error:", err.message );
+    }
+}, 15000 ); // every 15 seconds
 
 // ------------------ GLOBAL CRASH HANDLERS ------------------
 process.on( 'uncaughtException', ( err ) =>
